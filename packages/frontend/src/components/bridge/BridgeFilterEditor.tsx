@@ -1,5 +1,6 @@
 import {
   HomeAssistantDomain,
+  type HomeAssistantEntityListItem,
   type HomeAssistantFilter,
   HomeAssistantMatcherType,
 } from "@home-assistant-matter-hub/common";
@@ -16,7 +17,10 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import FormGroup from "@mui/material/FormGroup";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import type { ChangeEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export interface BridgeFilterEditorProps {
   value: HomeAssistantFilter | undefined;
@@ -45,7 +49,11 @@ function getMatcherValues(
   list: HomeAssistantFilter["include"],
   type: HomeAssistantMatcherType,
 ): Set<string> {
-  return new Set(list.filter((m) => m.type === type).map((m) => m.value));
+  return new Set(
+    list
+      .filter((m: HomeAssistantFilter["include"][number]) => m.type === type)
+      .map((m: HomeAssistantFilter["include"][number]) => m.value),
+  );
 }
 
 function updateMatcherList(
@@ -53,13 +61,17 @@ function updateMatcherList(
   type: HomeAssistantMatcherType,
   values: string[],
 ): HomeAssistantFilter["include"] {
-  const remaining = list.filter((m) => m.type !== type);
+  const remaining = list.filter(
+    (m: HomeAssistantFilter["include"][number]) => m.type !== type,
+  );
   const next = values.map((value) => ({ type, value }));
   return [...remaining, ...next];
 }
 
 export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
   const filter = normalizeFilter(props.value);
+  const [entities, setEntities] = useState<HomeAssistantEntityListItem[]>([]);
+  const [search, setSearch] = useState<string>("");
 
   const includeDomains = getMatcherValues(
     filter.include,
@@ -78,6 +90,44 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
     filter.exclude,
     HomeAssistantMatcherType.EntityCategory,
   );
+
+  const includeEntities = getMatcherValues(
+    filter.include,
+    HomeAssistantMatcherType.Entity,
+  );
+  const excludeEntities = getMatcherValues(
+    filter.exclude,
+    HomeAssistantMatcherType.Entity,
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("api/matter/registry/entities")
+      .then((res) => res.json())
+      .then((list: HomeAssistantEntityListItem[]) => {
+        if (!cancelled) {
+          setEntities(list);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setEntities([]);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filteredEntities = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return entities;
+    return entities.filter((entity: HomeAssistantEntityListItem) => {
+      const haystack = `${entity.name} ${entity.entity_id} ${entity.device_name ?? ""} ${entity.domain}`
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [entities, search]);
 
   const toggleDomain = (domain: string, mode: "include" | "exclude") => {
     const includeValues = new Set(includeDomains);
@@ -129,6 +179,32 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
       exclude: updateMatcherList(
         filter.exclude,
         HomeAssistantMatcherType.EntityCategory,
+        [...excludeValues],
+      ),
+    });
+  };
+
+  const toggleEntity = (entityId: string, mode: "include" | "exclude") => {
+    const includeValues = new Set(includeEntities);
+    const excludeValues = new Set(excludeEntities);
+    const current = mode === "include" ? includeValues : excludeValues;
+    if (current.has(entityId)) {
+      current.delete(entityId);
+    } else {
+      current.add(entityId);
+      if (mode === "include") excludeValues.delete(entityId);
+      if (mode === "exclude") includeValues.delete(entityId);
+    }
+
+    props.onChange({
+      include: updateMatcherList(
+        filter.include,
+        HomeAssistantMatcherType.Entity,
+        [...includeValues],
+      ),
+      exclude: updateMatcherList(
+        filter.exclude,
+        HomeAssistantMatcherType.Entity,
         [...excludeValues],
       ),
     });
@@ -238,6 +314,85 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
                     />
                   ))}
                 </FormGroup>
+              </Grid>
+            </Grid>
+          </Box>
+
+          <Box>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Typography variant="subtitle1">Entities</Typography>
+              <Chip size="small" label="Type: entity" />
+            </Stack>
+            <Divider sx={{ my: 1 }} />
+            <TextField
+              size="small"
+              fullWidth
+              label="Search entities"
+              value={search}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                setSearch(event.target.value)
+              }
+            />
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <CheckCircleOutline fontSize="small" color="success" />
+                  <Typography variant="body2">Include</Typography>
+                </Stack>
+                <Box sx={{ maxHeight: 320, overflow: "auto", mt: 1 }}>
+                  <FormGroup>
+                    {filteredEntities.map((entity: HomeAssistantEntityListItem) => (
+                      <FormControlLabel
+                        key={`include-entity-${entity.entity_id}`}
+                        control={
+                          <Checkbox
+                            checked={includeEntities.has(entity.entity_id)}
+                            onChange={() =>
+                              toggleEntity(entity.entity_id, "include")
+                            }
+                          />
+                        }
+                        label={
+                          `${entity.name} (${entity.entity_id})${
+                            entity.device_name
+                              ? ` • ${entity.device_name}`
+                              : ""
+                          }`
+                        }
+                      />
+                    ))}
+                  </FormGroup>
+                </Box>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <DoNotDisturbOnOutlined fontSize="small" color="error" />
+                  <Typography variant="body2">Exclude</Typography>
+                </Stack>
+                <Box sx={{ maxHeight: 320, overflow: "auto", mt: 1 }}>
+                  <FormGroup>
+                    {filteredEntities.map((entity: HomeAssistantEntityListItem) => (
+                      <FormControlLabel
+                        key={`exclude-entity-${entity.entity_id}`}
+                        control={
+                          <Checkbox
+                            checked={excludeEntities.has(entity.entity_id)}
+                            onChange={() =>
+                              toggleEntity(entity.entity_id, "exclude")
+                            }
+                          />
+                        }
+                        label={
+                          `${entity.name} (${entity.entity_id})${
+                            entity.device_name
+                              ? ` • ${entity.device_name}`
+                              : ""
+                          }`
+                        }
+                      />
+                    ))}
+                  </FormGroup>
+                </Box>
               </Grid>
             </Grid>
           </Box>

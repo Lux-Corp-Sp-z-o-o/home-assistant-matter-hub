@@ -1,4 +1,5 @@
 export enum HomeAssistantMatcherType {
+  Entity = "entity",
   Pattern = "pattern",
   Domain = "domain",
   Platform = "platform",

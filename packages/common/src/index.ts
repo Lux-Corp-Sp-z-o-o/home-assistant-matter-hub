@@ -4,6 +4,7 @@ export * from "./domains/index.js";
 export * from "./endpoint-data.js";
 export * from "./home-assistant-device-registry.js";
 export * from "./home-assistant-domain.js";
+export * from "./home-assistant-entity-list.js";
 export * from "./home-assistant-entity-information.js";
 export * from "./home-assistant-entity-registry.js";
 export * from "./home-assistant-entity-state.js";

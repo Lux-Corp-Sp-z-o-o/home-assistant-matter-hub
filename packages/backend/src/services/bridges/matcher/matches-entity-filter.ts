@@ -18,6 +18,8 @@ export function testMatcher(
   entity: HomeAssistantEntityRegistry,
 ): boolean {
   switch (matcher.type) {
+    case "entity":
+      return entity.entity_id === matcher.value;
     case "domain":
       return entity.entity_id.split(".")[0] === matcher.value;
     case "label":

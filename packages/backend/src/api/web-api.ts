@@ -6,6 +6,7 @@ import nocache from "nocache";
 import type { BetterLogger, LoggerService } from "../core/app/logger.js";
 import { Service } from "../core/ioc/service.js";
 import type { BridgeService } from "../services/bridges/bridge-service.js";
+import type { HomeAssistantRegistry } from "../services/home-assistant/home-assistant-registry.js";
 import { accessLogger } from "./access-log.js";
 import { matterApi } from "./matter-api.js";
 import { supportIngress, supportProxyLocation } from "./proxy-support.js";
@@ -31,6 +32,7 @@ export class WebApi extends Service {
   constructor(
     logger: LoggerService,
     private readonly bridgeService: BridgeService,
+    private readonly homeAssistantRegistry: HomeAssistantRegistry,
     private readonly props: WebApiProps,
   ) {
     super("WebApi");
@@ -43,7 +45,7 @@ export class WebApi extends Service {
     api
       .use(express.json())
       .use(nocache())
-      .use("/matter", matterApi(this.bridgeService));
+      .use("/matter", matterApi(this.bridgeService, this.homeAssistantRegistry));
 
     const middlewares: express.Handler[] = [
       this.accessLogger,
