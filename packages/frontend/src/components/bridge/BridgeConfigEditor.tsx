@@ -65,9 +65,19 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
     [props.bridgeId, props.usedPorts],
   );
 
-  const onChange = (data: object | undefined, isValid: boolean) => {
-    setConfig(data);
+  const onBaseChange = (data: object | undefined, isValid: boolean) => {
+    setConfig((current) => ({
+      ...(current ?? {}),
+      ...(data ?? {}),
+    }));
     setIsValid(isValid);
+  };
+
+  const onFeatureFlagsChange = (data: object | undefined) => {
+    setConfig((current) => ({
+      ...(current ?? {}),
+      ...(data ?? {}),
+    }));
   };
 
   const onFilterChange = (filter: HomeAssistantFilter) => {
@@ -75,6 +85,25 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
       ...(current ?? {}),
       filter,
     }));
+  };
+
+  const baseSchema = {
+    ...bridgeConfigSchema,
+    properties: {
+      name: bridgeConfigSchema.properties?.name,
+      port: bridgeConfigSchema.properties?.port,
+      countryCode: bridgeConfigSchema.properties?.countryCode,
+    },
+    required: ["name", "port"],
+  };
+
+  const featureFlagsSchema = {
+    type: "object",
+    title: "Feature Flags",
+    properties: {
+      featureFlags: bridgeConfigSchema.properties?.featureFlags,
+    },
+    required: [],
   };
 
   const saveAction = async () => {
@@ -117,15 +146,20 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
 
         {editorMode === BridgeEditorMode.FIELDS_EDITOR && (
           <Stack spacing={2}>
+            <FormEditor
+              value={config ?? {}}
+              onChange={onBaseChange}
+              schema={baseSchema}
+              customValidate={validatePort}
+            />
             <BridgeFilterEditor
               value={(config as BridgeConfig | undefined)?.filter}
               onChange={onFilterChange}
             />
             <FormEditor
               value={config ?? {}}
-              onChange={onChange}
-              schema={bridgeConfigSchema}
-              customValidate={validatePort}
+              onChange={(data) => onFeatureFlagsChange(data)}
+              schema={featureFlagsSchema}
             />
           </Stack>
         )}
@@ -133,7 +167,7 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
         {editorMode === BridgeEditorMode.JSON_EDITOR && (
           <JsonEditor
             value={config ?? {}}
-            onChange={onChange}
+            onChange={onBaseChange}
             schema={bridgeConfigSchema}
             customValidate={validatePort}
           />

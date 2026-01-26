@@ -1,4 +1,4 @@
-version: "3.0.5"
+version: "3.0.6"
 image: ghcr.io/lux-corp-sp-z-o-o/home-assistant-matter-hub-addon
 slug: hamh
 name: Matter Bridge Pro
