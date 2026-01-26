@@ -1,6 +1,6 @@
 {
   "name": "@home-assistant-matter-hub/root",
-  "version": "0.0.0",
+  "version": "3.0.5",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.28.1",
