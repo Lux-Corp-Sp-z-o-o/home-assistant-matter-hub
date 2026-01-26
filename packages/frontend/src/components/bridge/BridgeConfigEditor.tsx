@@ -10,6 +10,7 @@ import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
+import type { JSONSchema7 } from "json-schema";
 import { useCallback, useState } from "react";
 import { navigation } from "../../routes.tsx";
 import { BridgeFilterEditor } from "./BridgeFilterEditor.tsx";
@@ -42,7 +43,7 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
     );
   };
 
-  const [config, setConfig] = useState<object | undefined>(props.bridge);
+  const [config, setConfig] = useState<BridgeConfig | undefined>(props.bridge);
   const [isValid, setIsValid] = useState<boolean>(true);
 
   const validatePort = useCallback(
@@ -66,44 +67,45 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
   );
 
   const onBaseChange = (data: object | undefined, isValid: boolean) => {
-    setConfig((current) => ({
+    const patch = (data ?? {}) as Partial<BridgeConfig>;
+    setConfig((current: BridgeConfig | undefined) => ({
       ...(current ?? {}),
-      ...(data ?? {}),
-    }));
+      ...patch,
+    } as BridgeConfig));
     setIsValid(isValid);
   };
 
   const onFeatureFlagsChange = (data: object | undefined) => {
-    setConfig((current) => ({
+    const patch = (data ?? {}) as Partial<BridgeConfig>;
+    setConfig((current: BridgeConfig | undefined) => ({
       ...(current ?? {}),
-      ...(data ?? {}),
-    }));
+      ...patch,
+    } as BridgeConfig));
   };
 
   const onFilterChange = (filter: HomeAssistantFilter) => {
-    setConfig((current) => ({
+    setConfig((current: BridgeConfig | undefined) => ({
       ...(current ?? {}),
       filter,
-    }));
+    } as BridgeConfig));
   };
 
-  const baseSchema = {
+  const baseSchema: JSONSchema7 = {
     ...bridgeConfigSchema,
     properties: {
-      name: bridgeConfigSchema.properties?.name,
-      port: bridgeConfigSchema.properties?.port,
-      countryCode: bridgeConfigSchema.properties?.countryCode,
+      name: bridgeConfigSchema.properties?.name ?? {},
+      port: bridgeConfigSchema.properties?.port ?? {},
+      countryCode: bridgeConfigSchema.properties?.countryCode ?? {},
     },
     required: ["name", "port"],
   };
 
-  const featureFlagsSchema = {
+  const featureFlagsSchema: JSONSchema7 = {
     type: "object",
     title: "Feature Flags",
     properties: {
-      featureFlags: bridgeConfigSchema.properties?.featureFlags,
+      featureFlags: bridgeConfigSchema.properties?.featureFlags ?? {},
     },
-    required: [],
   };
 
   const saveAction = async () => {
@@ -153,7 +155,7 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
               customValidate={validatePort}
             />
             <BridgeFilterEditor
-              value={(config as BridgeConfig | undefined)?.filter}
+              value={config?.filter}
               onChange={onFilterChange}
             />
             <FormEditor
