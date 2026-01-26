@@ -1,6 +1,7 @@
 import {
   type BridgeConfig,
   bridgeConfigSchema,
+  type HomeAssistantFilter,
 } from "@home-assistant-matter-hub/common";
 import { LibraryBooks, TextFields } from "@mui/icons-material";
 import Alert from "@mui/material/Alert";
@@ -11,6 +12,7 @@ import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import { useCallback, useState } from "react";
 import { navigation } from "../../routes.tsx";
+import { BridgeFilterEditor } from "./BridgeFilterEditor.tsx";
 import { FormEditor } from "../misc/editors/FormEditor";
 import { JsonEditor } from "../misc/editors/JsonEditor";
 import type { ValidationError } from "../misc/editors/validation-error.ts";
@@ -68,6 +70,13 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
     setIsValid(isValid);
   };
 
+  const onFilterChange = (filter: HomeAssistantFilter) => {
+    setConfig((current) => ({
+      ...(current ?? {}),
+      filter,
+    }));
+  };
+
   const saveAction = async () => {
     if (!isValid) {
       return;
@@ -107,12 +116,18 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
         </Box>
 
         {editorMode === BridgeEditorMode.FIELDS_EDITOR && (
-          <FormEditor
-            value={config ?? {}}
-            onChange={onChange}
-            schema={bridgeConfigSchema}
-            customValidate={validatePort}
-          />
+          <Stack spacing={2}>
+            <BridgeFilterEditor
+              value={(config as BridgeConfig | undefined)?.filter}
+              onChange={onFilterChange}
+            />
+            <FormEditor
+              value={config ?? {}}
+              onChange={onChange}
+              schema={bridgeConfigSchema}
+              customValidate={validatePort}
+            />
+          </Stack>
         )}
 
         {editorMode === BridgeEditorMode.JSON_EDITOR && (
