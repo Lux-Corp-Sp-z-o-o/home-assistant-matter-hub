@@ -245,13 +245,34 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
   };
 
   return (
-    <Card variant="outlined">
+    <Card
+      variant="outlined"
+      sx={{
+        borderRadius: 2,
+        borderColor: "divider",
+        background: "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0))",
+      }}
+    >
       <CardHeader
         title="Entity selection"
-        subheader="Pick exact entities to expose to Matter/Google Home."
+        subheader="Pick exactly what appears in Matter/Google Home."
+        action={
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Chip
+              size="small"
+              color="success"
+              label={`Included ${includeEntities.size}`}
+            />
+            <Chip
+              size="small"
+              color="error"
+              label={`Excluded ${excludeEntities.size}`}
+            />
+          </Stack>
+        }
       />
       <CardContent>
-        <Stack spacing={2}>
+        <Stack spacing={2.5}>
           <Box>
             <Stack direction="row" spacing={1} alignItems="center">
               <Typography variant="subtitle1">Entities</Typography>
@@ -283,6 +304,7 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
                   size="small"
                   fullWidth
                   label="Search entities"
+                  helperText="Search by name, entity_id, device name"
                   value={search}
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
                     setSearch(event.target.value)
@@ -307,11 +329,19 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
               <Grid size={{ xs: 12, md: 6 }}>
                 <Stack direction="row" spacing={1} alignItems="center">
                   <CheckCircleOutline fontSize="small" color="success" />
-                  <Typography variant="body2">
-                    Include ({includeEntities.size})
-                  </Typography>
+                  <Typography variant="body2">Include list</Typography>
                 </Stack>
-                <Box sx={{ maxHeight: 360, overflow: "auto", mt: 1 }}>
+                <Box
+                  sx={{
+                    maxHeight: 360,
+                    overflow: "auto",
+                    mt: 1,
+                    pr: 1,
+                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor: "divider",
+                  }}
+                >
                   <FormGroup>
                     {filteredEntities.map((entity: HomeAssistantEntityListItem) => (
                       <FormControlLabel
@@ -333,17 +363,30 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
                         }
                       />
                     ))}
+                    {filteredEntities.length === 0 && (
+                      <Typography variant="body2" sx={{ px: 2, py: 1 }}>
+                        No entities match your filters.
+                      </Typography>
+                    )}
                   </FormGroup>
                 </Box>
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <Stack direction="row" spacing={1} alignItems="center">
                   <DoNotDisturbOnOutlined fontSize="small" color="error" />
-                  <Typography variant="body2">
-                    Exclude ({excludeEntities.size})
-                  </Typography>
+                  <Typography variant="body2">Exclude list</Typography>
                 </Stack>
-                <Box sx={{ maxHeight: 360, overflow: "auto", mt: 1 }}>
+                <Box
+                  sx={{
+                    maxHeight: 360,
+                    overflow: "auto",
+                    mt: 1,
+                    pr: 1,
+                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor: "divider",
+                  }}
+                >
                   <FormGroup>
                     {filteredEntities.map((entity: HomeAssistantEntityListItem) => (
                       <FormControlLabel
@@ -365,13 +408,18 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
                         }
                       />
                     ))}
+                    {filteredEntities.length === 0 && (
+                      <Typography variant="body2" sx={{ px: 2, py: 1 }}>
+                        No entities match your filters.
+                      </Typography>
+                    )}
                   </FormGroup>
                 </Box>
               </Grid>
             </Grid>
           </Box>
 
-          <Accordion variant="outlined">
+          <Accordion variant="outlined" sx={{ borderRadius: 1 }}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="subtitle1">Advanced rules</Typography>
             </AccordionSummary>

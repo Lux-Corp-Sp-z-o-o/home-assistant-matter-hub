@@ -7,9 +7,14 @@ import { LibraryBooks, TextFields } from "@mui/icons-material";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import type { JSONSchema7 } from "json-schema";
 import { useCallback, useState } from "react";
 import { navigation } from "../../routes.tsx";
@@ -175,23 +180,41 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
 
         {editorMode === BridgeEditorMode.FIELDS_EDITOR && (
           <Stack spacing={2}>
-            <FormEditor
-              value={baseValue}
-              onChange={onBaseChange}
-              schema={baseSchema}
-              uiSchema={baseUiSchema}
-              customValidate={validatePort}
-            />
+            <Card variant="outlined" sx={{ borderRadius: 2 }}>
+              <CardHeader
+                title="Bridge settings"
+                subheader="Basics for your Matter bridge"
+              />
+              <CardContent>
+                <FormEditor
+                  value={baseValue}
+                  onChange={onBaseChange}
+                  schema={baseSchema}
+                  uiSchema={baseUiSchema}
+                  customValidate={validatePort}
+                />
+              </CardContent>
+            </Card>
+
             <BridgeFilterEditor
               value={config?.filter}
               onChange={onFilterChange}
             />
-            <FormEditor
-              value={featureFlagsValue}
-              onChange={(data) => onFeatureFlagsChange(data)}
-              schema={featureFlagsSchema}
-              uiSchema={featureFlagsUiSchema}
-            />
+
+            <Card variant="outlined" sx={{ borderRadius: 2 }}>
+              <CardHeader
+                title="Feature flags"
+                subheader="Optional behavior tweaks"
+              />
+              <CardContent>
+                <FormEditor
+                  value={featureFlagsValue}
+                  onChange={(data) => onFeatureFlagsChange(data)}
+                  schema={featureFlagsSchema}
+                  uiSchema={featureFlagsUiSchema}
+                />
+              </CardContent>
+            </Card>
           </Stack>
         )}
 
@@ -204,7 +227,8 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
           />
         )}
 
-        <Grid container>
+        <Divider sx={{ mt: 1 }} />
+        <Grid container sx={{ mt: 2 }}>
           <Grid size={{ xs: 6, sm: 4, md: 3 }}>
             <Button
               fullWidth
@@ -222,7 +246,7 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
           <Grid size={{ xs: 6, sm: 4, md: 3 }}>
             <Button
               fullWidth
-              variant="outlined"
+              variant="contained"
               disabled={!isValid}
               onClick={saveAction}
             >
