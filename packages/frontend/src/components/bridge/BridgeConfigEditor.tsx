@@ -94,20 +94,33 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
   };
 
   const baseSchema: JSONSchema7 = {
-    ...bridgeConfigSchema,
+    type: "object",
     properties: {
       name: bridgeConfigSchema.properties?.name ?? {},
       port: bridgeConfigSchema.properties?.port ?? {},
       countryCode: bridgeConfigSchema.properties?.countryCode ?? {},
     },
     required: ["name", "port"],
+    additionalProperties: true,
   };
 
   const featureFlagsSchema: JSONSchema7 = {
     type: "object",
-    title: "Feature Flags",
     properties: {
       featureFlags: bridgeConfigSchema.properties?.featureFlags ?? {},
+    },
+    additionalProperties: true,
+  };
+
+  const baseUiSchema = {
+    "ui:submitButtonOptions": { norender: true },
+  };
+
+  const featureFlagsUiSchema = {
+    "ui:submitButtonOptions": { norender: true },
+    featureFlags: {
+      "ui:title": "",
+      "ui:options": { label: false },
     },
   };
 
@@ -156,6 +169,7 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
               value={config ?? {}}
               onChange={onBaseChange}
               schema={baseSchema}
+              uiSchema={baseUiSchema}
               customValidate={validatePort}
             />
             <BridgeFilterEditor
@@ -166,6 +180,7 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
               value={config ?? {}}
               onChange={(data) => onFeatureFlagsChange(data)}
               schema={featureFlagsSchema}
+              uiSchema={featureFlagsUiSchema}
             />
           </Stack>
         )}
