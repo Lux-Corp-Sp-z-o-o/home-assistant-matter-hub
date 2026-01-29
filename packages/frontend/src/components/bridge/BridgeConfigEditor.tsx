@@ -43,7 +43,10 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
     );
   };
 
-  const [config, setConfig] = useState<BridgeConfig | undefined>(props.bridge);
+  const [config, setConfig] = useState<BridgeConfig | undefined>(() => ({
+    ...props.bridge,
+    filter: props.bridge.filter ?? { include: [], exclude: [] },
+  }));
   const [isValid, setIsValid] = useState<boolean>(true);
 
   const validatePort = useCallback(
@@ -112,20 +115,21 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
     if (!isValid) {
       return;
     }
-    await props.onSave(config as BridgeConfig);
+    const normalized: BridgeConfig = {
+      ...(config ?? props.bridge),
+      filter: config?.filter ?? { include: [], exclude: [] },
+    } as BridgeConfig;
+    await props.onSave(normalized);
   };
 
   return (
     <>
-      <Alert severity="warning" variant="outlined">
-        Please consult{" "}
+      <Alert severity="info" variant="outlined">
+        Need help? Check{" "}
         <Link href={navigation.faq.bridgeConfig} target="_blank">
-          the documentation
+          the bridge configuration guide
         </Link>{" "}
-        for proper bridge configurations.{" "}
-        <strong>
-          Especially if you are using labels, see the "Labels" section.
-        </strong>
+        for labels, areas, and other advanced tips.
       </Alert>
 
       <Stack spacing={2}>

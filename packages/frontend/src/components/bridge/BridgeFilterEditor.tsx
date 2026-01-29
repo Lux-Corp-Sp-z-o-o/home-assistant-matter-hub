@@ -6,6 +6,10 @@ import {
 } from "@home-assistant-matter-hub/common";
 import CheckCircleOutline from "@mui/icons-material/CheckCircleOutline";
 import DoNotDisturbOnOutlined from "@mui/icons-material/DoNotDisturbOnOutlined";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import Accordion from "@mui/material/Accordion";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import AccordionSummary from "@mui/material/AccordionSummary";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -14,8 +18,13 @@ import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import FormControl from "@mui/material/FormControl";
 import FormGroup from "@mui/material/FormGroup";
 import Grid from "@mui/material/Grid";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import type { SelectChangeEvent } from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -72,6 +81,8 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
   const filter = normalizeFilter(props.value);
   const [entities, setEntities] = useState<HomeAssistantEntityListItem[]>([]);
   const [search, setSearch] = useState<string>("");
+  const [domainFilter, setDomainFilter] = useState<string>("all");
+  const [showSelectedOnly, setShowSelectedOnly] = useState<boolean>(false);
 
   const includeDomains = getMatcherValues(
     filter.include,
@@ -121,13 +132,36 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
 
   const filteredEntities = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return entities;
-    return entities.filter((entity: HomeAssistantEntityListItem) => {
+    let list = entities;
+    if (domainFilter !== "all") {
+      list = list.filter((entity) => entity.domain === domainFilter);
+    }
+    if (showSelectedOnly) {
+      list = list.filter(
+        (entity) =>
+          includeEntities.has(entity.entity_id) ||
+          excludeEntities.has(entity.entity_id),
+      );
+    }
+    if (!query) return list;
+    return list.filter((entity: HomeAssistantEntityListItem) => {
       const haystack = `${entity.name} ${entity.entity_id} ${entity.device_name ?? ""} ${entity.domain}`
         .toLowerCase();
       return haystack.includes(query);
     });
-  }, [entities, search]);
+  }, [
+    entities,
+    search,
+    domainFilter,
+    showSelectedOnly,
+    includeEntities,
+    excludeEntities,
+  ]);
+
+  const domainOptions = useMemo(() => {
+    const values = new Set(entities.map((entity) => entity.domain));
+    return ["all", ...[...values].sort()];
+  }, [entities]);
 
   const toggleDomain = (domain: string, mode: "include" | "exclude") => {
     const includeValues = new Set(includeDomains);
@@ -213,133 +247,71 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
   return (
     <Card variant="outlined">
       <CardHeader
-        title="Quick filters"
-        subheader="Select domains or entity categories with a single click."
+        title="Entity selection"
+        subheader="Pick exact entities to expose to Matter/Google Home."
       />
       <CardContent>
         <Stack spacing={2}>
-          <Box>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Typography variant="subtitle1">Domains</Typography>
-              <Chip size="small" label="Type: domain" />
-            </Stack>
-            <Divider sx={{ my: 1 }} />
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <CheckCircleOutline fontSize="small" color="success" />
-                  <Typography variant="body2">Include</Typography>
-                </Stack>
-                <FormGroup>
-                  {DOMAIN_OPTIONS.map((domain) => (
-                    <FormControlLabel
-                      key={`include-${domain}`}
-                      control={
-                        <Checkbox
-                          checked={includeDomains.has(domain)}
-                          onChange={() => toggleDomain(domain, "include")}
-                        />
-                      }
-                      label={titleCase(domain)}
-                    />
-                  ))}
-                </FormGroup>
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <DoNotDisturbOnOutlined fontSize="small" color="error" />
-                  <Typography variant="body2">Exclude</Typography>
-                </Stack>
-                <FormGroup>
-                  {DOMAIN_OPTIONS.map((domain) => (
-                    <FormControlLabel
-                      key={`exclude-${domain}`}
-                      control={
-                        <Checkbox
-                          checked={excludeDomains.has(domain)}
-                          onChange={() => toggleDomain(domain, "exclude")}
-                        />
-                      }
-                      label={titleCase(domain)}
-                    />
-                  ))}
-                </FormGroup>
-              </Grid>
-            </Grid>
-          </Box>
-
-          <Box>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Typography variant="subtitle1">Entity Categories</Typography>
-              <Chip size="small" label="Type: entity_category" />
-            </Stack>
-            <Divider sx={{ my: 1 }} />
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <CheckCircleOutline fontSize="small" color="success" />
-                  <Typography variant="body2">Include</Typography>
-                </Stack>
-                <FormGroup>
-                  {ENTITY_CATEGORY_OPTIONS.map((category) => (
-                    <FormControlLabel
-                      key={`include-cat-${category}`}
-                      control={
-                        <Checkbox
-                          checked={includeCategories.has(category)}
-                          onChange={() => toggleCategory(category, "include")}
-                        />
-                      }
-                      label={titleCase(category)}
-                    />
-                  ))}
-                </FormGroup>
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <DoNotDisturbOnOutlined fontSize="small" color="error" />
-                  <Typography variant="body2">Exclude</Typography>
-                </Stack>
-                <FormGroup>
-                  {ENTITY_CATEGORY_OPTIONS.map((category) => (
-                    <FormControlLabel
-                      key={`exclude-cat-${category}`}
-                      control={
-                        <Checkbox
-                          checked={excludeCategories.has(category)}
-                          onChange={() => toggleCategory(category, "exclude")}
-                        />
-                      }
-                      label={titleCase(category)}
-                    />
-                  ))}
-                </FormGroup>
-              </Grid>
-            </Grid>
-          </Box>
-
           <Box>
             <Stack direction="row" spacing={1} alignItems="center">
               <Typography variant="subtitle1">Entities</Typography>
               <Chip size="small" label="Type: entity" />
             </Stack>
             <Divider sx={{ my: 1 }} />
-            <TextField
-              size="small"
-              fullWidth
-              label="Search entities"
-              value={search}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                setSearch(event.target.value)
-              }
-            />
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, md: 5 }}>
+                <FormControl fullWidth size="small">
+                  <InputLabel id="entity-domain-filter">Domain</InputLabel>
+                  <Select
+                    labelId="entity-domain-filter"
+                    value={domainFilter}
+                    label="Domain"
+                    onChange={(event: SelectChangeEvent) =>
+                      setDomainFilter(event.target.value)
+                    }
+                  >
+                    {domainOptions.map((domain) => (
+                      <MenuItem key={domain} value={domain}>
+                        {domain === "all" ? "All domains" : titleCase(domain)}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid size={{ xs: 12, md: 5 }}>
+                <TextField
+                  size="small"
+                  fullWidth
+                  label="Search entities"
+                  value={search}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                    setSearch(event.target.value)
+                  }
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 2 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={showSelectedOnly}
+                      onChange={(event) =>
+                        setShowSelectedOnly(event.target.checked)
+                      }
+                    />
+                  }
+                  label="Selected only"
+                />
+              </Grid>
+            </Grid>
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <Stack direction="row" spacing={1} alignItems="center">
                   <CheckCircleOutline fontSize="small" color="success" />
-                  <Typography variant="body2">Include</Typography>
+                  <Typography variant="body2">
+                    Include ({includeEntities.size})
+                  </Typography>
                 </Stack>
-                <Box sx={{ maxHeight: 320, overflow: "auto", mt: 1 }}>
+                <Box sx={{ maxHeight: 360, overflow: "auto", mt: 1 }}>
                   <FormGroup>
                     {filteredEntities.map((entity: HomeAssistantEntityListItem) => (
                       <FormControlLabel
@@ -367,9 +339,11 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
               <Grid size={{ xs: 12, md: 6 }}>
                 <Stack direction="row" spacing={1} alignItems="center">
                   <DoNotDisturbOnOutlined fontSize="small" color="error" />
-                  <Typography variant="body2">Exclude</Typography>
+                  <Typography variant="body2">
+                    Exclude ({excludeEntities.size})
+                  </Typography>
                 </Stack>
-                <Box sx={{ maxHeight: 320, overflow: "auto", mt: 1 }}>
+                <Box sx={{ maxHeight: 360, overflow: "auto", mt: 1 }}>
                   <FormGroup>
                     {filteredEntities.map((entity: HomeAssistantEntityListItem) => (
                       <FormControlLabel
@@ -396,6 +370,119 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
               </Grid>
             </Grid>
           </Box>
+
+          <Accordion variant="outlined">
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="subtitle1">Advanced rules</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Stack spacing={2}>
+                <Box>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Typography variant="subtitle2">Domains</Typography>
+                    <Chip size="small" label="Type: domain" />
+                  </Stack>
+                  <Divider sx={{ my: 1 }} />
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <CheckCircleOutline fontSize="small" color="success" />
+                        <Typography variant="body2">Include</Typography>
+                      </Stack>
+                      <FormGroup>
+                        {DOMAIN_OPTIONS.map((domain) => (
+                          <FormControlLabel
+                            key={`include-${domain}`}
+                            control={
+                              <Checkbox
+                                checked={includeDomains.has(domain)}
+                                onChange={() => toggleDomain(domain, "include")}
+                              />
+                            }
+                            label={titleCase(domain)}
+                          />
+                        ))}
+                      </FormGroup>
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <DoNotDisturbOnOutlined fontSize="small" color="error" />
+                        <Typography variant="body2">Exclude</Typography>
+                      </Stack>
+                      <FormGroup>
+                        {DOMAIN_OPTIONS.map((domain) => (
+                          <FormControlLabel
+                            key={`exclude-${domain}`}
+                            control={
+                              <Checkbox
+                                checked={excludeDomains.has(domain)}
+                                onChange={() => toggleDomain(domain, "exclude")}
+                              />
+                            }
+                            label={titleCase(domain)}
+                          />
+                        ))}
+                      </FormGroup>
+                    </Grid>
+                  </Grid>
+                </Box>
+
+                <Box>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Typography variant="subtitle2">Entity Categories</Typography>
+                    <Chip size="small" label="Type: entity_category" />
+                  </Stack>
+                  <Divider sx={{ my: 1 }} />
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <CheckCircleOutline fontSize="small" color="success" />
+                        <Typography variant="body2">Include</Typography>
+                      </Stack>
+                      <FormGroup>
+                        {ENTITY_CATEGORY_OPTIONS.map((category) => (
+                          <FormControlLabel
+                            key={`include-cat-${category}`}
+                            control={
+                              <Checkbox
+                                checked={includeCategories.has(category)}
+                                onChange={() =>
+                                  toggleCategory(category, "include")
+                                }
+                              />
+                            }
+                            label={titleCase(category)}
+                          />
+                        ))}
+                      </FormGroup>
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <DoNotDisturbOnOutlined fontSize="small" color="error" />
+                        <Typography variant="body2">Exclude</Typography>
+                      </Stack>
+                      <FormGroup>
+                        {ENTITY_CATEGORY_OPTIONS.map((category) => (
+                          <FormControlLabel
+                            key={`exclude-cat-${category}`}
+                            control={
+                              <Checkbox
+                                checked={excludeCategories.has(category)}
+                                onChange={() =>
+                                  toggleCategory(category, "exclude")
+                                }
+                              />
+                            }
+                            label={titleCase(category)}
+                          />
+                        ))}
+                      </FormGroup>
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Stack>
+            </AccordionDetails>
+          </Accordion>
         </Stack>
       </CardContent>
     </Card>
