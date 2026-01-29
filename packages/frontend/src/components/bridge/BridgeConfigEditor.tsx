@@ -101,7 +101,7 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
       countryCode: bridgeConfigSchema.properties?.countryCode ?? {},
     },
     required: ["name", "port"],
-    additionalProperties: true,
+    additionalProperties: false,
   };
 
   const featureFlagsSchema: JSONSchema7 = {
@@ -109,7 +109,7 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
     properties: {
       featureFlags: bridgeConfigSchema.properties?.featureFlags ?? {},
     },
-    additionalProperties: true,
+    additionalProperties: false,
   };
 
   const baseUiSchema = {
@@ -122,6 +122,16 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
       "ui:title": "",
       "ui:options": { label: false },
     },
+  };
+
+  const baseValue = {
+    name: config?.name ?? "",
+    port: config?.port ?? props.bridge.port,
+    countryCode: config?.countryCode ?? "",
+  };
+
+  const featureFlagsValue = {
+    featureFlags: config?.featureFlags ?? {},
   };
 
   const saveAction = async () => {
@@ -166,7 +176,7 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
         {editorMode === BridgeEditorMode.FIELDS_EDITOR && (
           <Stack spacing={2}>
             <FormEditor
-              value={config ?? {}}
+              value={baseValue}
               onChange={onBaseChange}
               schema={baseSchema}
               uiSchema={baseUiSchema}
@@ -177,7 +187,7 @@ export const BridgeConfigEditor = (props: BridgeConfigEditorProps) => {
               onChange={onFilterChange}
             />
             <FormEditor
-              value={config ?? {}}
+              value={featureFlagsValue}
               onChange={(data) => onFeatureFlagsChange(data)}
               schema={featureFlagsSchema}
               uiSchema={featureFlagsUiSchema}

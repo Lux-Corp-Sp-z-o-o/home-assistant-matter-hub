@@ -18,24 +18,32 @@ export class BasicInformationServer extends Base {
   private update(entity: HomeAssistantEntityInformation) {
     const { basicInformation } = this.env.get(BridgeDataProvider);
     const device = entity.deviceRegistry;
+    const registry = entity.registry;
+    const friendlyName =
+      ellipse(32, entity.state?.attributes?.friendly_name) ??
+      ellipse(32, registry?.name) ??
+      ellipse(32, registry?.original_name) ??
+      ellipse(32, device?.name_by_user) ??
+      ellipse(32, device?.name);
     applyPatchState(this.state, {
       vendorId: VendorId(basicInformation.vendorId),
       vendorName:
         ellipse(32, device?.manufacturer) ??
         hash(32, basicInformation.vendorName),
       productName:
+        friendlyName ??
         ellipse(32, device?.model_id) ??
         ellipse(32, device?.model) ??
         hash(32, basicInformation.productName),
       productLabel:
-        ellipse(64, device?.model) ?? hash(64, basicInformation.productLabel),
+        friendlyName ??
+        ellipse(64, device?.model) ??
+        hash(64, basicInformation.productLabel),
       hardwareVersion: basicInformation.hardwareVersion,
       softwareVersion: basicInformation.softwareVersion,
       hardwareVersionString: ellipse(64, device?.hw_version),
       softwareVersionString: ellipse(64, device?.sw_version),
-      nodeLabel:
-        ellipse(32, entity.state?.attributes?.friendly_name) ??
-        ellipse(32, entity.entity_id),
+      nodeLabel: friendlyName ?? ellipse(32, entity.entity_id),
       reachable:
         entity.state?.state != null && entity.state.state !== "unavailable",
       // The device serial number is available in `device?.serial_number`, but
