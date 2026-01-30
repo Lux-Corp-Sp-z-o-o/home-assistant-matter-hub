@@ -14,6 +14,10 @@ export function SensorDevice(
   const attributes = homeAssistantEntity.entity.state
     .attributes as SensorDeviceAttributes;
   const deviceClass = attributes.device_class;
+  const unit =
+    typeof attributes.unit_of_measurement === "string"
+      ? attributes.unit_of_measurement.toLowerCase()
+      : undefined;
 
   if (deviceClass === SensorDeviceClass.temperature) {
     return TemperatureSensorType.set({ homeAssistantEntity });
@@ -22,6 +26,15 @@ export function SensorDevice(
     return HumiditySensorType.set({ homeAssistantEntity });
   }
   if (deviceClass === SensorDeviceClass.illuminance) {
+    return IlluminanceSensorType.set({ homeAssistantEntity });
+  }
+  if (unit === "°c" || unit === "°f" || unit === "c" || unit === "f") {
+    return TemperatureSensorType.set({ homeAssistantEntity });
+  }
+  if (unit === "%") {
+    return HumiditySensorType.set({ homeAssistantEntity });
+  }
+  if (unit === "lx" || unit === "lux") {
     return IlluminanceSensorType.set({ homeAssistantEntity });
   }
   return undefined;

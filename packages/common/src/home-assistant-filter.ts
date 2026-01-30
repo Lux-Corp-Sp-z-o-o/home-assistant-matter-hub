@@ -11,6 +11,7 @@ export enum HomeAssistantMatcherType {
 export interface HomeAssistantMatcher {
   readonly type: HomeAssistantMatcherType;
   readonly value: string;
+  readonly alias?: string;
 }
 
 export interface HomeAssistantFilter {

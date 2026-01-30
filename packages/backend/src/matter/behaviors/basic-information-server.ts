@@ -16,10 +16,16 @@ export class BasicInformationServer extends Base {
   }
 
   private update(entity: HomeAssistantEntityInformation) {
-    const { basicInformation } = this.env.get(BridgeDataProvider);
+    const { basicInformation, filter } = this.env.get(BridgeDataProvider);
     const device = entity.deviceRegistry;
     const registry = entity.registry;
+    const alias =
+      filter?.include
+        ?.filter((matcher) => matcher.type === "entity")
+        .find((matcher) => matcher.value === entity.entity_id)?.alias ??
+      undefined;
     const friendlyName =
+      ellipse(32, alias) ??
       ellipse(32, entity.state?.attributes?.friendly_name) ??
       ellipse(32, registry?.name) ??
       ellipse(32, registry?.original_name) ??

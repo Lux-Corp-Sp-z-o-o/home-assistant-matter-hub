@@ -65,6 +65,16 @@ function getMatcherValues(
   );
 }
 
+function getEntityAlias(
+  list: HomeAssistantFilter["include"],
+  entityId: string,
+): string {
+  const matcher = list.find(
+    (item) => item.type === HomeAssistantMatcherType.Entity && item.value === entityId,
+  );
+  return typeof matcher?.alias === "string" ? matcher.alias : "";
+}
+
 function updateMatcherList(
   list: HomeAssistantFilter["include"],
   type: HomeAssistantMatcherType,
@@ -74,6 +84,26 @@ function updateMatcherList(
     (m: HomeAssistantFilter["include"][number]) => m.type !== type,
   );
   const next = values.map((value) => ({ type, value }));
+  return [...remaining, ...next];
+}
+
+function updateEntityMatchers(
+  list: HomeAssistantFilter["include"],
+  values: string[],
+): HomeAssistantFilter["include"] {
+  const aliasMap = new Map(
+    list
+      .filter((item) => item.type === HomeAssistantMatcherType.Entity)
+      .map((item) => [item.value, item.alias]),
+  );
+  const remaining = list.filter(
+    (item) => item.type !== HomeAssistantMatcherType.Entity,
+  );
+  const next = values.map((value) => ({
+    type: HomeAssistantMatcherType.Entity,
+    value,
+    alias: aliasMap.get(value),
+  }));
   return [...remaining, ...next];
 }
 
@@ -231,16 +261,33 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
     }
 
     props.onChange({
-      include: updateMatcherList(
-        filter.include,
-        HomeAssistantMatcherType.Entity,
-        [...includeValues],
-      ),
+      include: updateEntityMatchers(filter.include, [...includeValues]),
       exclude: updateMatcherList(
         filter.exclude,
         HomeAssistantMatcherType.Entity,
         [...excludeValues],
       ),
+    });
+  };
+
+  const setEntityAlias = (entityId: string, alias: string) => {
+    const trimmed = alias.trim();
+    const nextInclude = filter.include
+      .filter((item) => item.type !== HomeAssistantMatcherType.Entity)
+      .concat(
+        [...includeEntities].map((value) => {
+          const existingAlias = getEntityAlias(filter.include, value);
+          return {
+            type: HomeAssistantMatcherType.Entity,
+            value,
+            alias: value === entityId ? trimmed || undefined : existingAlias || undefined,
+          };
+        }),
+      );
+
+    props.onChange({
+      include: nextInclude,
+      exclude: filter.exclude,
     });
   };
 
@@ -355,11 +402,26 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
                           />
                         }
                         label={
-                          `${entity.name} (${entity.entity_id})${
-                            entity.device_name
-                              ? ` • ${entity.device_name}`
-                              : ""
-                          }`
+                          <Stack spacing={0.5}>
+                            <Typography variant="body2">
+                              {`${entity.name} (${entity.entity_id})${
+                                entity.device_name
+                                  ? ` • ${entity.device_name}`
+                                  : ""
+                              }`}
+                            </Typography>
+                            {includeEntities.has(entity.entity_id) && (
+                              <TextField
+                                size="small"
+                                label="Custom name"
+                                placeholder="Optional"
+                                value={getEntityAlias(filter.include, entity.entity_id)}
+                                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                                  setEntityAlias(entity.entity_id, event.target.value)
+                                }
+                              />
+                            )}
+                          </Stack>
                         }
                       />
                     ))}

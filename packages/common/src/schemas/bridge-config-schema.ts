@@ -15,6 +15,11 @@ const homeAssistantMatcherSchema: JSONSchema7 = {
       type: "string",
       minLength: 1,
     },
+    alias: {
+      title: "Alias",
+      type: "string",
+      minLength: 1,
+    },
   },
   required: ["type", "value"],
   additionalProperties: false,
