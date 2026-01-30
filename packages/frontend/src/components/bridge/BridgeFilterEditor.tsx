@@ -389,19 +389,25 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
                     borderColor: "divider",
                   }}
                 >
-                  <FormGroup>
-                    {filteredEntities.map((entity: HomeAssistantEntityListItem) => (
-                      <FormControlLabel
-                        key={`include-entity-${entity.entity_id}`}
-                        control={
+                  <Stack spacing={1} sx={{ p: 1 }}>
+                    {filteredEntities.map((entity: HomeAssistantEntityListItem) => {
+                      const checked = includeEntities.has(entity.entity_id);
+                      return (
+                        <Box
+                          key={`include-entity-${entity.entity_id}`}
+                          sx={{
+                            display: "grid",
+                            gridTemplateColumns: "auto 1fr",
+                            columnGap: 1,
+                            alignItems: "start",
+                          }}
+                        >
                           <Checkbox
-                            checked={includeEntities.has(entity.entity_id)}
+                            checked={checked}
                             onChange={() =>
                               toggleEntity(entity.entity_id, "include")
                             }
                           />
-                        }
-                        label={
                           <Stack spacing={0.5}>
                             <Typography variant="body2">
                               {`${entity.name} (${entity.entity_id})${
@@ -410,27 +416,33 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
                                   : ""
                               }`}
                             </Typography>
-                            {includeEntities.has(entity.entity_id) && (
+                            {checked && (
                               <TextField
                                 size="small"
                                 label="Custom name"
                                 placeholder="Optional"
-                                value={getEntityAlias(filter.include, entity.entity_id)}
+                                value={getEntityAlias(
+                                  filter.include,
+                                  entity.entity_id,
+                                )}
                                 onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                                  setEntityAlias(entity.entity_id, event.target.value)
+                                  setEntityAlias(
+                                    entity.entity_id,
+                                    event.target.value,
+                                  )
                                 }
                               />
                             )}
                           </Stack>
-                        }
-                      />
-                    ))}
+                        </Box>
+                      );
+                    })}
                     {filteredEntities.length === 0 && (
                       <Typography variant="body2" sx={{ px: 2, py: 1 }}>
                         No entities match your filters.
                       </Typography>
                     )}
-                  </FormGroup>
+                  </Stack>
                 </Box>
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
