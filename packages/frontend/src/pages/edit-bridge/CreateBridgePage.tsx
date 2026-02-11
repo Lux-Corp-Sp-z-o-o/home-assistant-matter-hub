@@ -1,6 +1,9 @@
 import type { BridgeConfig } from "@home-assistant-matter-hub/common";
 import Alert from "@mui/material/Alert";
+import LinearProgress from "@mui/material/LinearProgress";
 import Link from "@mui/material/Link";
+import Paper from "@mui/material/Paper";
+import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useMemo } from "react";
@@ -63,7 +66,18 @@ export const CreateBridgePage = () => {
   };
 
   if (!bridgeConfig || !usedPorts) {
-    return "Loading";
+    return (
+      <Stack spacing={3}>
+        <Skeleton variant="text" width={260} height={40} />
+        <Paper variant="outlined" sx={{ p: 3 }}>
+          <Stack spacing={2}>
+            <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 1 }} />
+            <LinearProgress />
+          </Stack>
+        </Paper>
+      </Stack>
+    );
   }
 
   return (

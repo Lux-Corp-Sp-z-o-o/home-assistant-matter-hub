@@ -1,8 +1,7 @@
 import { Add } from "@mui/icons-material";
-import Backdrop from "@mui/material/Backdrop";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
+import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import { useEffect } from "react";
 import { Link } from "react-router";
@@ -26,36 +25,29 @@ export const BridgesPage = () => {
   }, [bridgeError, notifications]);
 
   return (
-    <>
-      <Backdrop
-        sx={(theme) => ({ zIndex: theme.zIndex.drawer + 1 })}
-        open={isLoading}
-      >
-        {isLoading && <CircularProgress color="inherit" />}
-      </Backdrop>
+    <Stack spacing={4}>
+      {isLoading && <LinearProgress />}
 
-      <Stack spacing={4}>
-        {bridges && (
-          <>
-            <Box
-              display="flex"
-              justifyContent="end"
-              paddingTop={{ xs: 1, sm: 0 }}
+      {bridges && (
+        <>
+          <Box
+            display="flex"
+            justifyContent="end"
+            paddingTop={{ xs: 1, sm: 0 }}
+          >
+            <Button
+              component={Link}
+              to={navigation.createBridge}
+              endIcon={<Add />}
+              variant="outlined"
             >
-              <Button
-                component={Link}
-                to={navigation.createBridge}
-                endIcon={<Add />}
-                variant="outlined"
-              >
-                Create new bridge
-              </Button>
-            </Box>
+              Create new bridge
+            </Button>
+          </Box>
 
-            <BridgeList bridges={bridges} />
-          </>
-        )}
-      </Stack>
-    </>
+          <BridgeList bridges={bridges} />
+        </>
+      )}
+    </Stack>
   );
 };

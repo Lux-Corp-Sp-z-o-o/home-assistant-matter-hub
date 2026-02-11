@@ -1,4 +1,7 @@
 import Box from "@mui/material/Box";
+import LinearProgress from "@mui/material/LinearProgress";
+import Paper from "@mui/material/Paper";
+import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -55,11 +58,31 @@ export const BridgeDetailsPage = () => {
   }, [devicesError, notifications]);
 
   if (!bridge && bridgeLoading) {
-    return "Loading";
+    return (
+      <Stack spacing={3}>
+        <Skeleton variant="text" width={200} height={40} />
+        <Skeleton variant="text" width={300} height={48} />
+        <Paper variant="outlined" sx={{ p: 3 }}>
+          <Stack spacing={2}>
+            <Skeleton variant="rectangular" height={160} sx={{ borderRadius: 1 }} />
+            <LinearProgress />
+          </Stack>
+        </Paper>
+      </Stack>
+    );
   }
 
   if (!bridge) {
-    return "Not found";
+    return (
+      <Stack spacing={2} alignItems="center" justifyContent="center" sx={{ py: 8 }}>
+        <Typography variant="h5" color="text.secondary">
+          Bridge not found
+        </Typography>
+        <Typography variant="body2" color="text.disabled">
+          The requested bridge does not exist or has been removed.
+        </Typography>
+      </Stack>
+    );
   }
 
   return (

@@ -32,17 +32,20 @@ export const NotificationsProvider = (props: PropsWithChildren) => {
   return (
     <NotificationsContext.Provider value={{ show }}>
       {props.children}
-      {notifications.map((notification) => (
+      {notifications.map((notification, index) => (
         <Snackbar
           key={notification.notificationId}
           open={true}
           autoHideDuration={notification.autoHideDuration}
           onClose={() => deleteNotification(notification.notificationId)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          sx={{ mb: `${index * 60}px` }}
         >
           <Alert
             severity={notification.severity}
             variant="filled"
-            sx={{ minWidth: "300px" }}
+            onClose={() => deleteNotification(notification.notificationId)}
+            sx={{ minWidth: "300px", boxShadow: 6 }}
           >
             {notification.message}
           </Alert>

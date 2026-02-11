@@ -1,5 +1,9 @@
 import type { BridgeConfig } from "@home-assistant-matter-hub/common";
+import LinearProgress from "@mui/material/LinearProgress";
+import Paper from "@mui/material/Paper";
+import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router";
 import { Breadcrumbs } from "../../components/breadcrumbs/Breadcrumbs.tsx";
@@ -53,10 +57,31 @@ export const EditBridgePage = () => {
   };
 
   if (isLoading || !usedPorts) {
-    return "Loading";
+    return (
+      <Stack spacing={3}>
+        <Skeleton variant="text" width={260} height={40} />
+        <Paper variant="outlined" sx={{ p: 3 }}>
+          <Stack spacing={2}>
+            <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 1 }} />
+            <LinearProgress />
+          </Stack>
+        </Paper>
+      </Stack>
+    );
   }
   if (!bridge || !bridgeConfig) {
-    return "Not found";
+    return (
+      <Stack spacing={2} alignItems="center" justifyContent="center" sx={{ py: 8 }}>
+        <Typography variant="h5" color="text.secondary">
+          Bridge not found
+        </Typography>
+        <Typography variant="body2" color="text.disabled">
+          The requested bridge does not exist or has been removed.
+        </Typography>
+      </Stack>
+    );
   }
 
   return (

@@ -193,6 +193,15 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
     return ["all", ...[...values].sort()];
   }, [entities]);
 
+  const domainCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const entity of entities) {
+      counts[entity.domain] = (counts[entity.domain] ?? 0) + 1;
+    }
+    counts.all = entities.length;
+    return counts;
+  }, [entities]);
+
   const toggleDomain = (domain: string, mode: "include" | "exclude") => {
     const includeValues = new Set(includeDomains);
     const excludeValues = new Set(excludeDomains);
@@ -339,8 +348,13 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
                     }
                   >
                     {domainOptions.map((domain) => (
-                      <MenuItem key={domain} value={domain}>
+                      <MenuItem key={domain} value={domain} sx={{ justifyContent: "space-between" }}>
                         {domain === "all" ? "All domains" : titleCase(domain)}
+                        <Chip
+                          size="small"
+                          label={domainCounts[domain] ?? 0}
+                          sx={{ ml: 1, height: 20, fontSize: "0.75rem" }}
+                        />
                       </MenuItem>
                     ))}
                   </Select>
@@ -462,26 +476,38 @@ export const BridgeFilterEditor = (props: BridgeFilterEditorProps) => {
                   }}
                 >
                   <FormGroup>
-                    {filteredEntities.map((entity: HomeAssistantEntityListItem) => (
-                      <FormControlLabel
-                        key={`exclude-entity-${entity.entity_id}`}
-                        control={
-                          <Checkbox
-                            checked={excludeEntities.has(entity.entity_id)}
-                            onChange={() =>
-                              toggleEntity(entity.entity_id, "exclude")
-                            }
-                          />
-                        }
-                        label={
-                          `${entity.name} (${entity.entity_id})${
-                            entity.device_name
-                              ? ` • ${entity.device_name}`
-                              : ""
-                          }`
-                        }
-                      />
-                    ))}
+                    {filteredEntities.map((entity: HomeAssistantEntityListItem) => {
+                      const isExcluded = excludeEntities.has(entity.entity_id);
+                      const isIncluded = includeEntities.has(entity.entity_id);
+                      return (
+                        <FormControlLabel
+                          key={`exclude-entity-${entity.entity_id}`}
+                          control={
+                            <Checkbox
+                              checked={isExcluded}
+                              onChange={() =>
+                                toggleEntity(entity.entity_id, "exclude")
+                              }
+                            />
+                          }
+                          sx={isIncluded ? { opacity: 0.5 } : undefined}
+                          label={
+                            <Box display="flex" alignItems="center" gap={0.5}>
+                              <span>
+                                {`${entity.name} (${entity.entity_id})${
+                                  entity.device_name
+                                    ? ` • ${entity.device_name}`
+                                    : ""
+                                }`}
+                              </span>
+                              {isIncluded && (
+                                <Chip size="small" label="included" color="success" sx={{ height: 18, fontSize: "0.7rem" }} />
+                              )}
+                            </Box>
+                          }
+                        />
+                      );
+                    })}
                     {filteredEntities.length === 0 && (
                       <Typography variant="body2" sx={{ px: 2, py: 1 }}>
                         No entities match your filters.
