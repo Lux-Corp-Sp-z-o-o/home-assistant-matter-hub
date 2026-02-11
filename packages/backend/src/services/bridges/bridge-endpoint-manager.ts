@@ -88,6 +88,14 @@ export class BridgeEndpointManager extends Service {
             this.log.error(
               `Failed to initialize device ${entityId}. It will be skipped. Error: ${e?.toString()}`,
             );
+            // Clean up the partially-initialized endpoint to prevent
+            // async callbacks (e.g. numberPersister) from crashing with
+            // "Endpoint storage inaccessible" after the failed add.
+            try {
+              await endpoint.close();
+            } catch {
+              // Ignore cleanup errors
+            }
             continue;
           }
         }

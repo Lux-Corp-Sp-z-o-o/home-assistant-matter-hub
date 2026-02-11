@@ -55,6 +55,16 @@ export class ThermostatServerBase extends FeaturedBase {
           ? Thermostat.ControlSequenceOfOperation.CoolingOnly
           : Thermostat.ControlSequenceOfOperation.HeatingOnly;
 
+    // Set minSetpointDeadBand during initialization (before super.initialize)
+    // so it becomes part of the initial state. The Matter spec default is 200
+    // (2°C), which causes constraint violations when both minHeatSetpointLimit
+    // and minCoolSetpointLimit share the same value, because the reactor
+    // validates: minHeat <= minCool - deadBand. Setting it here ensures the
+    // deadband is already 0 when update() later sets the setpoint limits.
+    if (this.features.autoMode) {
+      this.state.minSetpointDeadBand = 0;
+    }
+
     await super.initialize();
 
     const homeAssistant = await this.agent.load(HomeAssistantEntityBehavior);
@@ -99,16 +109,9 @@ export class ThermostatServerBase extends FeaturedBase {
     const systemMode = this.getSystemMode(entity);
     const runningMode = config.getRunningMode(entity.state, this.agent);
 
-    // When autoMode is enabled, set minSetpointDeadBand FIRST to avoid
-    // constraint violations. Matter.js validates that
-    // minHeatSetpointLimit <= minCoolSetpointLimit - minSetpointDeadBand
-    // on each property change. The default deadband is 200 (2°C), so if
-    // both limits equal the same value, the constraint fails unless
-    // deadband is set to 0 beforehand.
     applyPatchState(this.state, {
       ...(this.features.autoMode
         ? {
-            minSetpointDeadBand: 0,
             thermostatRunningMode: runningMode,
           }
         : {}),
