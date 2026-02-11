@@ -93,13 +93,25 @@ export class ThermostatServerBase extends FeaturedBase {
         ?.celsius(true) ?? this.state.occupiedHeatingSetpoint;
     const targetCoolingTemperature =
       config
-        .getTargetHeatingTemperature(entity.state, this.agent)
+        .getTargetCoolingTemperature(entity.state, this.agent)
         ?.celsius(true) ?? this.state.occupiedCoolingSetpoint;
 
     const systemMode = this.getSystemMode(entity);
     const runningMode = config.getRunningMode(entity.state, this.agent);
 
+    // When autoMode is enabled, set minSetpointDeadBand FIRST to avoid
+    // constraint violations. Matter.js validates that
+    // minHeatSetpointLimit <= minCoolSetpointLimit - minSetpointDeadBand
+    // on each property change. The default deadband is 200 (2°C), so if
+    // both limits equal the same value, the constraint fails unless
+    // deadband is set to 0 beforehand.
     applyPatchState(this.state, {
+      ...(this.features.autoMode
+        ? {
+            minSetpointDeadBand: 0,
+            thermostatRunningMode: runningMode,
+          }
+        : {}),
       localTemperature: localTemperature,
       systemMode: systemMode,
       thermostatRunningState: this.getRunningState(systemMode, runningMode),
@@ -119,12 +131,6 @@ export class ThermostatServerBase extends FeaturedBase {
             maxCoolSetpointLimit: maxSetpointLimit,
             absMinCoolSetpointLimit: minSetpointLimit,
             absMaxCoolSetpointLimit: maxSetpointLimit,
-          }
-        : {}),
-      ...(this.features.autoMode
-        ? {
-            minSetpointDeadBand: 0,
-            thermostatRunningMode: runningMode,
           }
         : {}),
     });

@@ -96,4 +96,32 @@ export class LegacyEndpoint extends EntityEndpoint {
       throw error;
     }
   }
+
+  /**
+   * Force a re-evaluation of behaviors that depend on bridge config (e.g.,
+   * aliases). This creates a new entity reference to trigger entity$Changed,
+   * causing BasicInformationServer to re-read the alias from BridgeDataProvider.
+   */
+  async notifyConfigChange() {
+    try {
+      await this.construction.ready;
+    } catch {
+      return;
+    }
+
+    try {
+      const current = this.stateOf(HomeAssistantEntityBehavior).entity;
+      await this.setStateOf(HomeAssistantEntityBehavior, {
+        entity: { ...current, state: { ...current.state } },
+      });
+    } catch (error) {
+      if (
+        error instanceof TransactionDestroyedError ||
+        error instanceof DestroyedDependencyError
+      ) {
+        return;
+      }
+      throw error;
+    }
+  }
 }

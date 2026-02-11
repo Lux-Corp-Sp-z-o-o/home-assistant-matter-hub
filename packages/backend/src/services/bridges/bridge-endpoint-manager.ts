@@ -50,10 +50,10 @@ export class BridgeEndpointManager extends Service {
   async refreshDevices() {
     this.registry.refresh();
 
-    const endpoints = this.root.parts.map((p) => p as EntityEndpoint);
+    const endpoints = this.root.parts.map((p) => p as LegacyEndpoint);
     this.entityIds = this.registry.entityIds;
 
-    const existingEndpoints: EntityEndpoint[] = [];
+    const existingEndpoints: LegacyEndpoint[] = [];
     for (const endpoint of endpoints) {
       if (!this.entityIds.includes(endpoint.entityId)) {
         await endpoint.delete();
@@ -82,9 +82,22 @@ export class BridgeEndpointManager extends Service {
         }
 
         if (endpoint) {
-          await this.root.add(endpoint);
+          try {
+            await this.root.add(endpoint);
+          } catch (e) {
+            this.log.error(
+              `Failed to initialize device ${entityId}. It will be skipped. Error: ${e?.toString()}`,
+            );
+            continue;
+          }
         }
       }
+    }
+
+    // Notify existing endpoints about potential config changes (e.g., aliases)
+    // so they re-evaluate their BasicInformation.
+    for (const endpoint of existingEndpoints) {
+      await endpoint.notifyConfigChange();
     }
 
     if (this.unsubscribe) {
